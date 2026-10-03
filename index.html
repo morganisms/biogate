@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BioGate</title>
+<meta name="description" content="Stage-gate readiness checker for diagnostic product development under ISO 13485, for RUO and IVD products.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚦</text></svg>">
+<script>/* apply a saved theme before first paint */try{const t=localStorage.getItem('biogate_theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root{
+  color-scheme:light;
+  --navy:#17304b;--teal:#2a8c82;--teal-lt:#7fd1c4;
+  --bg:#f2f6f7;--surface:#ffffff;--ink:#1c2b3a;--muted:#5d6b78;--line:#e1e7ec;--head:#eef2f5;--head-ink:#3b4a58;
+  --btn-hover:#b9c5cf;--callout:#e9f3f1;--callout-ink:#2d4a47;--focus:#7fd1c4;--badge:#e3f2ef;--teal-ink:#2a8c82;
+  --hi:#1f7a52;--hi-bg:#e3f4ea;--md:#8a6a12;--md-bg:#fbf1d6;--lo:#9a3b3b;--lo-bg:#f8e3e3;--mand:#3b4a7a;--mand-bg:#e6e9f2;
+  --dot-hi:#1f7a52;--dot-md:#c99a1e;--dot-lo:#b04a4a;--dot-na:#a7b2bc;
+  --tip:#17304b;--tip-line:transparent;--track:#d5dee5;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --navy:#10233a;--bg:#111a23;--surface:#18232e;--ink:#e3e9ee;--muted:#9aa8b5;--line:#2a3743;--head:#1f2c38;--head-ink:#b5c2ce;
+    --btn-hover:#3c4c5b;--callout:#16302d;--callout-ink:#bfe3dc;--badge:#173a35;--teal-ink:#7fd1c4;
+    --hi:#9fdcb9;--hi-bg:#173a2a;--md:#f0d68f;--md-bg:#3e3315;--lo:#e58a8a;--lo-bg:#3d1f22;--mand:#b4bfe6;--mand-bg:#242d45;
+    --dot-hi:#3aa673;--dot-md:#d9ad3a;--dot-lo:#d06464;--dot-na:#4f5d6a;
+    --tip:#0b1622;--tip-line:#3c4c5b;--track:#2e3c49;
+  }
+}
+:root[data-theme="dark"]{
+    color-scheme:dark;
+    --navy:#10233a;--bg:#111a23;--surface:#18232e;--ink:#e3e9ee;--muted:#9aa8b5;--line:#2a3743;--head:#1f2c38;--head-ink:#b5c2ce;
+    --btn-hover:#3c4c5b;--callout:#16302d;--callout-ink:#bfe3dc;--badge:#173a35;--teal-ink:#7fd1c4;
+    --hi:#9fdcb9;--hi-bg:#173a2a;--md:#f0d68f;--md-bg:#3e3315;--lo:#e58a8a;--lo-bg:#3d1f22;--mand:#b4bfe6;--mand-bg:#242d45;
+    --dot-hi:#3aa673;--dot-md:#d9ad3a;--dot-lo:#d06464;--dot-na:#4f5d6a;
+    --tip:#0b1622;--tip-line:#3c4c5b;--track:#2e3c49;
+}
+*{box-sizing:border-box}
+html{background:var(--navy);scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+
+header{background:var(--navy);color:#fff;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{font-size:26px;font-weight:700}.brand span{color:var(--teal-lt)}
+.sub{font-size:15px;opacity:.85;margin-top:2px}
+.headtools{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.themetoggle{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:7px 14px 7px 11px;font:600 14px/1.2 inherit;font-family:inherit;cursor:pointer}
+.themetoggle:hover{border-color:var(--teal-lt);color:var(--teal-lt)}
+.themetoggle svg{width:16px;height:16px;flex:none}
+.tag{font-size:18px;color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.4)}
+.tag:hover{color:var(--teal-lt);border-bottom-color:var(--teal-lt)}
+
+nav{background:var(--surface);border-bottom:1px solid var(--line);padding:0 20px;display:flex;gap:6px;overflow-x:auto}
+nav button{background:none;border:0;padding:16px 22px;font:600 16px/1.2 inherit;font-family:inherit;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--teal)}
+nav button:hover{color:var(--ink)}
+
+main{max-width:1240px;margin:0 auto;padding:32px 24px 64px}
+h1{font-size:30px;margin:0 0 6px}
+h2{font-size:21px;margin:0 0 14px}
+h3{font-size:17px;margin:0 0 8px}
+.lead{color:var(--muted);font-size:17px;margin:0 0 24px;max-width:72ch}
+.hint{font-weight:400;color:var(--muted);font-size:13px;margin-top:4px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 15px;border-radius:7px;font:600 15px/1.2 inherit;font-family:inherit;cursor:pointer}
+.btn:hover{border-color:var(--btn-hover)}
+.btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn.danger{color:var(--lo)}
+.btn.sm{padding:6px 10px;font-size:13px}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+label{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
+input,select,textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;font:15px/1.35 inherit;font-family:inherit;background:var(--surface);color:var(--ink)}
+.chk{display:inline-flex;gap:8px;align-items:center;font-weight:600;font-size:15px;margin:0;cursor:pointer}.chk input{width:auto;margin:0}
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.lv-nn{background:var(--mand-bg);color:var(--mand)}
+.lv-rec{background:var(--head);color:var(--head-ink)}
+.lv-na{background:transparent;color:var(--muted);font-weight:400}
+.st-inplace{background:var(--hi-bg);color:var(--hi)}.st-inprogress{background:var(--md-bg);color:var(--md)}.st-missing{background:var(--lo-bg);color:var(--lo)}.st-na{background:var(--head);color:var(--muted)}
+.callout{background:var(--callout);border-left:4px solid var(--teal);padding:14px 18px;border-radius:6px;color:var(--callout-ink);font-size:15px;line-height:1.5}
+.toast{position:fixed;bottom:calc(22px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--tip);border:1px solid var(--tip-line);color:#fff;padding:12px 20px;border-radius:8px;font-size:15px;display:none;z-index:20;max-width:calc(100% - 32px)}
+.empty{color:var(--muted);text-align:center;padding:30px}
+
+/* Project configuration bar */
+.config{display:grid;grid-template-columns:minmax(220px,1.4fr) auto auto minmax(170px,1fr);gap:18px 26px;align-items:end;margin-bottom:22px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:9px 16px;font:600 15px/1.2 inherit;font-family:inherit;color:var(--muted);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--navy);color:#fff}
+.opts{display:flex;gap:16px;flex-wrap:wrap;padding:9px 0}
+.opts .chk.off{opacity:.45;cursor:not-allowed}
+
+/* Gate rail — the stage-gate track */
+.rail{position:relative;display:grid;grid-template-columns:repeat(5,1fr);margin:6px 0 26px;padding:0 4px}
+.rail::before{content:"";position:absolute;left:10%;right:10%;top:34px;height:4px;background:var(--track);border-radius:2px}
+.gate{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;background:none;border:0;padding:6px 6px 10px;cursor:pointer;color:var(--ink);font-family:inherit;border-radius:10px}
+.gate:hover .dia{transform:rotate(45deg) scale(1.06)}
+.dia{width:44px;height:44px;transform:rotate(45deg);border-radius:6px;display:grid;place-items:center;border:3px solid var(--surface);box-shadow:0 0 0 2px var(--track);transition:transform .15s ease;margin:6px 0 4px}
+.dia b{transform:rotate(-45deg);color:#fff;font-size:15px}
+.gate[aria-current="step"] .dia{box-shadow:0 0 0 3px var(--teal)}
+.gate[aria-pressed="true"]{background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.d-ready{background:var(--dot-hi)}.d-cond{background:var(--dot-md)}.d-block{background:var(--dot-lo)}.d-none{background:var(--dot-na)}
+.gname{font-weight:700;font-size:14.5px;line-height:1.25}
+.gmeta{font-size:12.5px;color:var(--muted)}
+.cur{font-size:11px;font-weight:700;color:var(--teal-ink);background:var(--badge);padding:2px 8px;border-radius:10px}
+@media (prefers-reduced-motion: reduce){.dia{transition:none}}
+
+/* Gate detail */
+.gatehead{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start;margin-bottom:18px}
+.verdict{display:flex;gap:14px;align-items:center;padding:14px 18px;border-radius:10px;min-width:260px}
+.verdict .big{font-size:30px;font-weight:700;line-height:1}
+.verdict .vt{font-weight:700;font-size:15px}
+.verdict .vs{font-size:13px}
+.v-ready{background:var(--hi-bg);color:var(--hi)}.v-cond{background:var(--md-bg);color:var(--md)}.v-block{background:var(--lo-bg);color:var(--lo)}
+.blockers{margin:0 0 18px;padding:12px 16px;border:1px solid var(--line);border-left:4px solid var(--dot-lo);border-radius:8px;background:var(--surface);font-size:14.5px}
+.blockers ul{margin:6px 0 0;padding-left:20px}
+.blockers a{color:var(--ink)}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.toolbar .spacer{flex:1}
+.progress{height:8px;border-radius:4px;background:var(--track);overflow:hidden;margin-top:8px}
+.progress i{display:block;height:100%;background:var(--teal)}
+
+.dlist{display:flex;flex-direction:column;gap:10px}
+.drow{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:16px 18px}
+.drow.s-inplace{border-left-color:var(--dot-hi)}.drow.s-inprogress{border-left-color:var(--dot-md)}.drow.s-missing{border-left-color:var(--dot-lo)}.drow.s-na{border-left-color:var(--dot-na)}
+.drow.rec.s-missing{border-left-color:var(--line)}
+.dtitle{font-weight:700;font-size:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ddesc{color:var(--muted);font-size:14px;line-height:1.5;margin:6px 0 6px;max-width:75ch}
+.dref{font-size:12.5px;color:var(--teal-ink);font-weight:600}
+.dnote{font-size:13px;color:var(--callout-ink);background:var(--callout);border-radius:6px;padding:6px 10px;margin-top:8px;max-width:75ch}
+.dctl{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dctl .full{grid-column:1/-1}
+.dctl label{font-size:12px;color:var(--muted);margin-bottom:3px;font-weight:600}
+.dctl input,.dctl select{font-size:14px;padding:7px 9px}
+.warnline[hidden]{display:none}
+.warnline{grid-column:1/-1;font-size:12.5px;color:var(--lo);font-weight:600}
+.nacount{font-size:13px;color:var(--muted);margin-top:14px}
+
+/* Matrix */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:760px}
+th{background:var(--head);text-align:left;font-size:13px;color:var(--head-ink);padding:12px 14px;white-space:nowrap;font-weight:700}
+td{padding:11px 14px;border-bottom:1px solid var(--line);font-size:14.5px;vertical-align:top}
+tr.ghead td{background:var(--bg);font-weight:700;color:var(--ink);font-size:14px;border-bottom:1px solid var(--line)}
+td.c{text-align:center;white-space:nowrap}
+.mname{font-weight:600}.mref{font-size:12px;color:var(--muted);margin-top:2px}
+.tag2{font-size:11px;font-weight:700;color:var(--teal-ink);background:var(--badge);padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:1px}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 18px;font-size:13.5px;color:var(--muted);align-items:center}
+
+/* Projects */
+.plist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:28px}
+.pcard{display:flex;flex-direction:column;gap:10px}
+.pcard .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pcard.active{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.mini{display:flex;gap:4px}
+.mini span{width:14px;height:14px;transform:rotate(45deg) scale(.8);border-radius:3px}
+
+@media (max-width:900px){
+  .config{grid-template-columns:1fr 1fr}
+  .drow{grid-template-columns:1fr}
+  .gatehead{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  main{padding:22px 14px 48px}
+  .config{grid-template-columns:1fr}
+  .rail{grid-template-columns:repeat(5,minmax(64px,1fr));overflow-x:auto}
+  .rail::before{top:34px}
+  .gmeta{display:none}
+  .gname{font-size:12.5px}
+  .grid2{grid-template-columns:1fr}
+  nav button{padding:14px 14px}
+}
+@media print{
+  header .headtools,nav,.toolbar,.config,.btn{display:none !important}
+  body{background:#fff}
+  .drow{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="brand">Bio<span>Gate</span></div><div class="sub">Stage-Gate Readiness Checker for Diagnostics (ISO 13485)</div></div>
+  <div class="headtools">
+    <button type="button" class="themetoggle" id="theme-toggle"></button>
+    <a class="tag" href="https://github.com/morganisms/biogate" target="_blank" rel="noopener noreferrer">morganisms: biogate</a>
+  </div>
+</header>
+<nav id="nav" role="tablist">
+  <button role="tab" data-v="readiness" aria-selected="true">Gate Readiness</button>
+  <button role="tab" data-v="matrix" aria-selected="false">Deliverable Matrix</button>
+  <button role="tab" data-v="projects" aria-selected="false">Projects &amp; Data</button>
+</nav>
+<main id="main"></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="jsonIn" accept=".json,application/json" hidden>
+
+<script>
+/* =====================================================================
+   Reference model: gates and deliverables
+   Levels: nn = non-negotiable, rec = recommended, na = not applicable
+   mkt: 'us' | 'eu' — applies only to IVD projects targeting that market
+   sw: true — applies only when the product includes software/instrument
+   ===================================================================== */
+const GATES = [
+  { id:0, code:'G0', name:'Concept Approval', purpose:'The opportunity is worth pursuing and the product\'s regulatory identity (RUO vs IVD, intended market) is defined.' },
+  { id:1, code:'G1', name:'Feasibility Exit / Design Inputs', purpose:'The technology works, design inputs are approved, and the project formally enters design control.' },
+  { id:2, code:'G2', name:'Design Freeze', purpose:'Design outputs are complete, risk is analyzed, and approved protocols are ready for formal verification and validation.' },
+  { id:3, code:'G3', name:'V&V Complete / Design Transfer', purpose:'The design is proven to meet inputs and user needs, is transferable to manufacturing, and submissions are filed.' },
+  { id:4, code:'G4', name:'Commercial Release', purpose:'The product is authorized for its market, manufactured under control, and supported post-launch.' },
+];
+
+const D = [
+  // ---- G0
+  { id:'bizcase', g:0, name:'Business case & market assessment', ruo:'nn', ivd:'nn',
+    desc:'Market need, customer segment, competitive landscape, revenue model, and estimated development cost and timeline.',
+    ref:'Portfolio governance' },
+  { id:'iu-draft', g:0, name:'Draft intended use statement', ruo:'nn', ivd:'nn',
+    desc:'Analyte, specimen type, technology, target population, and intended user and setting.',
+    ruoNote:'For RUO, state research applications only. Any diagnostic, clinical, or patient-management language makes it an IVD.',
+    ref:'ISO 13485 §7.2.1 · 21 CFR 809.10(c)' },
+  { id:'regstrat', g:0, name:'Regulatory classification & strategy assessment', ruo:'nn', ivd:'nn',
+    desc:'Documented classification decision and pathway rationale (e.g., FDA Class I/II/III; IVDR Class A–D).',
+    ruoNote:'Document the RUO rationale and confirm no clinical claims are planned (FDA RUO/IUO guidance).',
+    ref:'21 CFR 862–866 · IVDR Annex VIII' },
+  { id:'tpp', g:0, name:'Target product profile (TPP)', ruo:'rec', ivd:'nn',
+    desc:'Target performance (sensitivity, specificity, LoD, turnaround), price point, and minimum viable claims.',
+    ref:'Portfolio governance' },
+  { id:'risk-prelim', g:0, name:'Preliminary hazard identification', ruo:'rec', ivd:'rec',
+    desc:'Early list of foreseeable hazards (e.g., false negatives or positives, sample mix-up, chemical hazards) to shape design inputs.',
+    ref:'ISO 14971 §5.4' },
+  { id:'ip', g:0, name:'IP & freedom-to-operate review', ruo:'rec', ivd:'rec',
+    desc:'Patent landscape and licensing needs for assay chemistry, targets, and platform.',
+    ref:'Business governance' },
+
+  // ---- G1
+  { id:'ddplan', g:1, name:'Design & development plan', ruo:'rec', ivd:'nn',
+    desc:'Stages, design reviews, V&V and transfer activities, responsibilities, and interfaces between functions.',
+    ref:'ISO 13485 §7.3.2' },
+  { id:'userneeds', g:1, name:'User needs & final intended use', ruo:'rec', ivd:'nn',
+    desc:'Approved user needs and intended use or indications for use, which form the basis for design validation.',
+    ref:'ISO 13485 §7.3.3 · §7.3.7' },
+  { id:'prs', g:1, name:'Design inputs / product requirements specification', ruo:'nn', ivd:'nn',
+    desc:'Complete, unambiguous, verifiable requirements: performance, functional, safety, regulatory, usability, and labeling.',
+    ruoNote:'RUO still needs a product specification to support datasheet claims and QC release.',
+    ref:'ISO 13485 §7.3.3' },
+  { id:'rmplan', g:1, name:'Risk management plan', ruo:'rec', ivd:'nn',
+    desc:'Scope, risk acceptability criteria, verification of control activities, and review responsibilities.',
+    ref:'ISO 14971 §4.4' },
+  { id:'feas', g:1, name:'Feasibility report', ruo:'nn', ivd:'nn',
+    desc:'Analytical proof of concept against key TPP targets, with technical risks and open questions documented.',
+    ref:'Development process' },
+  { id:'input-review', g:1, name:'Design input review record', ruo:'rec', ivd:'nn',
+    desc:'Formal review confirming that inputs are adequate, complete, and not conflicting, with an independent reviewer.',
+    ref:'ISO 13485 §7.3.5' },
+  { id:'regplan', g:1, name:'Regulatory plan', ruo:'na', ivd:'nn',
+    desc:'Submission pathway, evidence requirements, standards to apply, and agency interaction strategy.',
+    ref:'Regulatory process' },
+  { id:'presub', g:1, mkt:'us', name:'FDA Pre-Submission (Q-Sub) feedback', ruo:'na', ivd:'rec',
+    desc:'Agency feedback on the study design, predicate or De Novo strategy, and clinical study plan.',
+    ref:'FDA Q-Submission guidance' },
+  { id:'pep', g:1, mkt:'eu', name:'Performance evaluation plan', ruo:'na', ivd:'nn',
+    desc:'Plan covering scientific validity, analytical performance, and clinical performance for the IVDR performance evaluation.',
+    ref:'IVDR Art. 56 · Annex XIII Part A' },
+  { id:'swplan', g:1, sw:true, name:'Software development plan & safety classification', ruo:'rec', ivd:'nn',
+    desc:'Software lifecycle plan, safety class assignment, and SOUP/OTS identification.',
+    ref:'IEC 62304 §5.1 · §4.3' },
+  { id:'suppliers', g:1, name:'Critical supplier & raw material identification', ruo:'rec', ivd:'rec',
+    desc:'Critical reagents and components identified, sourcing risks assessed, and supplier qualification started.',
+    ref:'ISO 13485 §7.4.1' },
+
+  // ---- G2
+  { id:'outputs', g:2, name:'Design outputs (formulation, BOM, specifications)', ruo:'nn', ivd:'nn',
+    desc:'Final formulation, bill of materials, component and reagent specifications, and drawings, approved before release.',
+    ref:'ISO 13485 §7.3.4' },
+  { id:'freeze-review', g:2, name:'Design freeze review record', ruo:'rec', ivd:'nn',
+    desc:'Formal design review confirming outputs meet inputs and the design is locked under change control.',
+    ref:'ISO 13485 §7.3.5 · §7.3.9' },
+  { id:'riskanalysis', g:2, name:'Risk analysis (hazard analysis, dFMEA/pFMEA)', ruo:'rec', ivd:'nn',
+    desc:'Hazards, hazardous situations, risk estimation, and controls linked to design requirements.',
+    ref:'ISO 14971 §5–7' },
+  { id:'trace', g:2, name:'Traceability matrix', ruo:'rec', ivd:'nn',
+    desc:'Links from user needs and inputs to outputs, risk controls, and planned V&V activities.',
+    ref:'ISO 13485 §7.3.2 · §7.3.6' },
+  { id:'vvplan', g:2, name:'Approved V&V protocols', ruo:'rec', ivd:'nn',
+    desc:'Verification and validation protocols with predefined acceptance criteria and statistical rationale.',
+    ref:'ISO 13485 §7.3.6 · §7.3.7' },
+  { id:'labeling-draft', g:2, name:'Draft labeling & instructions for use', ruo:'nn', ivd:'nn',
+    desc:'Labels, IFU or package insert, and limitations, aligned with intended use and claims.',
+    ruoNote:'Must carry "For Research Use Only. Not for use in diagnostic procedures."',
+    ref:'21 CFR 809.10 · IVDR Annex I Ch. III' },
+  { id:'process-dev', g:2, name:'Pilot lots & manufacturing process definition', ruo:'nn', ivd:'nn',
+    desc:'Pilot or engineering lots built with the defined process, and critical process parameters identified.',
+    ref:'ISO 13485 §7.5.1' },
+  { id:'clin-protocol', g:2, name:'Clinical performance study protocol & ethics approval', ruo:'na', ivd:'nn',
+    desc:'Protocol, specimen strategy, comparator method, and IRB or ethics approval. If no clinical data is needed, mark N/A and justify it.',
+    ref:'21 CFR 812 · IVDR Art. 57–58' },
+  { id:'swreq', g:2, sw:true, name:'Software requirements & architecture', ruo:'rec', ivd:'nn',
+    desc:'Software requirements specification and architecture design, including cybersecurity considerations.',
+    ref:'IEC 62304 §5.2–5.3' },
+
+  // ---- G3
+  { id:'av', g:3, name:'Analytical verification reports', ruo:'nn', ivd:'nn',
+    desc:'Precision, LoB/LoD/LoQ, linearity or reportable range, interference, cross-reactivity, and carryover against acceptance criteria.',
+    ruoNote:'Scope can be lighter for RUO, but every performance claim on the datasheet must be supported by data.',
+    ref:'ISO 13485 §7.3.6 · CLSI EP05/EP06/EP07/EP17' },
+  { id:'stability', g:3, name:'Stability studies & shelf-life claim', ruo:'nn', ivd:'nn',
+    desc:'Real-time and accelerated stability, in-use, open-vial, and shipping stability supporting the expiry dating on the label.',
+    ref:'CLSI EP25 · ISO 23640' },
+  { id:'validation', g:3, name:'Design validation / clinical performance report', ruo:'rec', ivd:'nn',
+    desc:'Evidence that the device meets user needs and intended use under actual or simulated conditions of use.',
+    ruoNote:'For RUO, a customer beta or fit-for-purpose study is good practice.',
+    ref:'ISO 13485 §7.3.7' },
+  { id:'usability', g:3, name:'Usability / human factors evaluation', ruo:'rec', ivd:'rec',
+    desc:'Summative evaluation of critical tasks, which is especially important for point-of-care and lay-user devices.',
+    ref:'IEC 62366-1' },
+  { id:'swvv', g:3, sw:true, name:'Software verification & validation', ruo:'rec', ivd:'nn',
+    desc:'Unit, integration, and system testing, anomaly list, and software release documentation.',
+    ref:'IEC 62304 §5.5–5.8' },
+  { id:'rmreport', g:3, name:'Risk management report', ruo:'rec', ivd:'nn',
+    desc:'Verified risk controls, overall residual risk evaluation, and benefit-risk conclusion.',
+    ref:'ISO 14971 §8–9' },
+  { id:'transfer', g:3, name:'Design transfer: process validation & QC release specs', ruo:'nn', ivd:'nn',
+    desc:'Process validation (IQ/OQ/PQ), manufacturing instructions, QC release specifications, and test methods.',
+    ruoNote:'At minimum, RUO needs documented manufacturing instructions and QC release specifications.',
+    ref:'ISO 13485 §7.3.8 · §7.5.6' },
+  { id:'transfer-review', g:3, name:'Final design review record', ruo:'rec', ivd:'nn',
+    desc:'Review confirming V&V results, transfer readiness, and closure or acceptance of open issues.',
+    ref:'ISO 13485 §7.3.5' },
+  { id:'dhf', g:3, name:'Design history file (design & development file) complete', ruo:'rec', ivd:'nn',
+    desc:'Compiled records demonstrating conformity to design and development requirements, with all design changes recorded.',
+    ref:'ISO 13485 §7.3.10 · 21 CFR 820 (QMSR)' },
+  { id:'us-sub', g:3, mkt:'us', name:'FDA submission filed (510(k), De Novo, or PMA)', ruo:'na', ivd:'nn',
+    desc:'Marketing submission filed with analytical and clinical data, labeling, and software/cybersecurity documentation as applicable.',
+    ref:'21 CFR 807 Subpart E · 21 CFR 814' },
+  { id:'eu-td', g:3, mkt:'eu', name:'IVDR technical documentation & performance evaluation report', ruo:'na', ivd:'nn',
+    desc:'Annex II and III technical documentation, GSPR checklist, and performance evaluation report. Notified body review is required for Class B–D and Class A sterile.',
+    ref:'IVDR Annex II–III · Annex XIII' },
+
+  // ---- G4
+  { id:'us-clear', g:4, mkt:'us', name:'FDA clearance/approval, registration & device listing', ruo:'na', ivd:'nn',
+    desc:'Clearance or approval letter received, establishment registration and device listing current, and UDI submitted to GUDID.',
+    ref:'21 CFR 807 · 21 CFR 830' },
+  { id:'eu-ce', g:4, mkt:'eu', name:'EU declaration of conformity, CE marking & EUDAMED registration', ruo:'na', ivd:'nn',
+    desc:'Notified body certificate where required, signed DoC, CE mark applied, UDI and EUDAMED registration, and a named PRRC.',
+    ref:'IVDR Art. 17–18, 15, 26' },
+  { id:'eu-pms', g:4, mkt:'eu', name:'Post-market surveillance & PMPF plans', ruo:'na', ivd:'nn',
+    desc:'PMS plan, post-market performance follow-up plan, and periodic safety update report (PSUR) schedule for Class C/D.',
+    ref:'IVDR Art. 78–81 · Annex III' },
+  { id:'vigilance', g:4, name:'Complaint handling & adverse event reporting ready', ruo:'nn', ivd:'nn',
+    desc:'Complaint intake, investigation, and trending procedures are live, and reportability decisions are defined (MDR or vigilance).',
+    ruoNote:'RUO still requires complaint handling; adverse event reporting obligations generally do not apply.',
+    ref:'ISO 13485 §8.2.2 · 21 CFR 803 · IVDR Art. 82–83' },
+  { id:'claims', g:4, name:'Promotional & claims review', ruo:'nn', ivd:'nn',
+    desc:'Marketing materials, website, and sales training reviewed against cleared or approved claims.',
+    ruoNote:'Critical for RUO: no clinical, diagnostic, or patient-management claims, and no promotion to clinical labs for diagnostic use.',
+    ref:'21 CFR 809.10(c) · IVDR Art. 7' },
+  { id:'lots', g:4, name:'Launch lots released per QC specification', ruo:'nn', ivd:'nn',
+    desc:'Commercial lots manufactured under the validated process and released with device history records.',
+    ref:'ISO 13485 §7.5.1 · §8.2.6' },
+  { id:'sds', g:4, name:'Safety data sheets', ruo:'nn', ivd:'nn',
+    desc:'SDS for hazardous components, plus hazard communication on labels.',
+    ref:'OSHA HazCom · EU CLP/REACH' },
+  { id:'commercial', g:4, name:'Commercial & service readiness', ruo:'rec', ivd:'rec',
+    desc:'Customer and field training, technical support, supply chain capacity, and distributor agreements.',
+    ref:'Launch process' },
+  { id:'lessons', g:4, name:'Lessons learned & gate retrospective', ruo:'rec', ivd:'rec',
+    desc:'Captured learnings that feed the PMO process and future project planning.',
+    ref:'PMO practice' },
+];
+
+const LEVEL_LABEL = { nn:'Non-negotiable', rec:'Recommended', na:'Not applicable' };
+const STATUS = [
+  { v:'missing', label:'Missing' },
+  { v:'inprogress', label:'In progress' },
+  { v:'inplace', label:'Evidence in place' },
+  { v:'na', label:'N/A (justified)' },
+];
+const STATUS_LABEL = Object.fromEntries(STATUS.map(s => [s.v, s.label]));
+
+/* =====================================================================
+   State
+   ===================================================================== */
+const STORAGE_KEY = 'biogate_v1', BACKUP_KEY = 'biogate_v1_unreadable', THEME_KEY = 'biogate_theme';
+let loadNotice = '';
+const uid = () => 'p' + (crypto?.getRandomValues ? Array.from(crypto.getRandomValues(new Uint8Array(6)), b => (b % 36).toString(36)).join('') : Math.random().toString(36).slice(2, 8)).padEnd(6, '0');
+
+function sampleProjects(){
+  const ivd = { id:uid(), name:'Respiratory Panel RT-PCR', type:'IVD', markets:{us:true, eu:true}, software:true, owner:'', currentGate:2, items:{} };
+  const done = ['bizcase','iu-draft','regstrat','tpp','risk-prelim','ddplan','userneeds','prs','rmplan','feas','input-review','regplan','pep','swplan','suppliers','outputs','process-dev','labeling-draft','riskanalysis'];
+  done.forEach(k => ivd.items[k] = { status:'inplace', evidence:'DHF-' + k.toUpperCase().slice(0,6) + '-001 Rev A', owner:'' });
+  ivd.items['presub'] = { status:'inprogress', evidence:'Q-Sub meeting scheduled', owner:'' };
+  ivd.items['trace'] = { status:'inprogress', evidence:'', owner:'' };
+  ivd.items['vvplan'] = { status:'inprogress', evidence:'', owner:'' };
+  ivd.items['ip'] = { status:'na', evidence:'Licensed platform; FTO covered by license agreement', owner:'' };
+  const ruo = { id:uid(), name:'NGS Library Prep Kit', type:'RUO', markets:{us:true, eu:false}, software:false, owner:'', currentGate:3, items:{} };
+  ['bizcase','iu-draft','regstrat','prs','feas','outputs','labeling-draft','process-dev','av'].forEach(k => ruo.items[k] = { status:'inplace', evidence:'RUO-' + k.toUpperCase().slice(0,6) + '-001', owner:'' });
+  ruo.items['stability'] = { status:'inprogress', evidence:'12-month real-time ongoing', owner:'' };
+  return [ivd, ruo];
+}
+function freshState(){ const projects = sampleProjects(); return { projects, activeId:projects[0].id }; }
+
+/* Untrusted input (localStorage, imported files) is rebuilt field by field:
+   only known deliverable ids, known statuses, bounded strings, safe ids. */
+const MAX_TEXT = 500, MAX_NAME = 120, MAX_PROJECTS = 200;
+const STATUS_SET = new Set(STATUS.map(s => s.v));
+const ID_RE = /^p[a-z0-9]{4,16}$/;
+const str = (v, max) => typeof v === 'string' ? v.slice(0, max) : '';
+const own = (o, k) => o != null && Object.prototype.hasOwnProperty.call(o, k);
+function sanitizeState(s){
+  if (!s || typeof s !== 'object' || !Array.isArray(s.projects)) return null;
+  const seen = new Set();
+  const projects = s.projects.filter(p => p && typeof p === 'object').slice(0, MAX_PROJECTS).map(p => {
+    let id = typeof p.id === 'string' && ID_RE.test(p.id) && !seen.has(p.id) ? p.id : uid();
+    while (seen.has(id)) id = uid();
+    seen.add(id);
+    const src = p.items && typeof p.items === 'object' ? p.items : {};
+    const items = {};
+    D.forEach(d => {
+      if (!own(src, d.id) || !src[d.id] || typeof src[d.id] !== 'object') return;
+      const it = src[d.id];
+      items[d.id] = { status: STATUS_SET.has(it.status) ? it.status : 'missing', evidence: str(it.evidence, MAX_TEXT), owner: str(it.owner, MAX_NAME) };
+    });
+    const g = Number(p.currentGate);
+    return {
+      id, name: str(p.name, MAX_NAME).trim() || 'Untitled project',
+      type: p.type === 'RUO' ? 'RUO' : 'IVD',
+      markets: { us: !!(p.markets && p.markets.us === true), eu: !!(p.markets && p.markets.eu === true) },
+      software: p.software === true,
+      currentGate: Number.isInteger(g) && g >= 0 && g < GATES.length ? g : 0,
+      items,
+    };
+  });
+  if (!projects.length) return null;
+  return { projects, activeId: projects.some(p => p.id === s.activeId) ? s.activeId : projects[0].id };
+}
+function load(){
+  let raw;
+  try { raw = localStorage.getItem(STORAGE_KEY); } catch(e){ return freshState(); }
+  if (!raw) return freshState();
+  try { const s = sanitizeState(JSON.parse(raw)); if (s) return s; } catch(e){}
+  // Keep the unreadable copy instead of overwriting it, then start from the samples.
+  try { localStorage.setItem(BACKUP_KEY, raw); } catch(e){}
+  loadNotice = `Your saved projects couldn't be read, so the sample projects were loaded. The unreadable copy is kept in browser storage under "${BACKUP_KEY}".`;
+  return freshState();
+}
+function persist(){ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); } catch(e){} }
+let S = load();
+let view = 'readiness', selGate = null, filter = 'all';
+
+const $ = sel => document.querySelector(sel);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const active = () => S.projects.find(p => p.id === S.activeId) || S.projects[0];
+function toast(msg, ms = 3000){ const t = $('#toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => t.style.display = 'none', ms); }
+
+/* =====================================================================
+   Readiness logic
+   ===================================================================== */
+function levelFor(d, p){
+  if (d.sw && !p.software) return 'na';
+  if (p.type === 'RUO') return d.ruo;
+  if (d.mkt && !(p.markets || {})[d.mkt]) return 'na';
+  return d.ivd;
+}
+function itemOf(p, id){ return p.items[id] || { status:'missing', evidence:'', owner:'' }; }
+function satisfied(it){ return it.status === 'inplace' || (it.status === 'na' && (it.evidence || '').trim().length > 0); }
+function gateStats(p, g){
+  const rows = D.filter(d => d.g === g).map(d => ({ d, lv:levelFor(d, p), it:itemOf(p, d.id) }));
+  const nn = rows.filter(r => r.lv === 'nn'), rec = rows.filter(r => r.lv === 'rec');
+  const nnDone = nn.filter(r => satisfied(r.it)).length, recDone = rec.filter(r => satisfied(r.it)).length;
+  const blockers = nn.filter(r => !satisfied(r.it));
+  let verdict = 'ready';
+  if (blockers.length) verdict = 'block';
+  else if (recDone < rec.length) verdict = 'cond';
+  return { rows, nn, rec, nnDone, recDone, blockers, verdict, naCount: rows.filter(r => r.lv === 'na').length };
+}
+const VERDICT = {
+  ready:{ cls:'ready', title:'Ready for gate review', icon:'✓' },
+  cond: { cls:'cond',  title:'Ready, with open recommended items', icon:'!' },
+  block:{ cls:'block', title:'Not ready — non-negotiables missing', icon:'✕' },
+};
+
+/* =====================================================================
+   Views
+   ===================================================================== */
+function render(){
+  document.querySelectorAll('#nav button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === view ? 'true' : 'false'));
+  if (view === 'readiness') renderReadiness();
+  else if (view === 'matrix') renderMatrix();
+  else renderProjects();
+}
+
+function renderReadiness(){
+  const p = active();
+  if (selGate === null) selGate = p.currentGate ?? 0;
+  const isIVD = p.type === 'IVD';
+  const stats = GATES.map(g => gateStats(p, g.id));
+  const st = stats[selGate];
+
+  let rows = st.rows.filter(r => r.lv !== 'na');
+  if (filter === 'gaps') rows = rows.filter(r => !satisfied(r.it));
+  if (filter === 'nn') rows = rows.filter(r => r.lv === 'nn');
+  rows.sort((a, b) => (a.lv === b.lv ? 0 : a.lv === 'nn' ? -1 : 1));
+
+  $('#main').innerHTML = `
+  <div class="config">
+    <div>
+      <label for="projSel">Project</label>
+      <select id="projSel">${S.projects.map(x => `<option value="${esc(x.id)}" ${x.id === p.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
+    </div>
+    <div>
+      <label id="typeLbl">Product type</label>
+      <div class="seg" role="group" aria-labelledby="typeLbl">
+        <button type="button" data-type="RUO" aria-pressed="${p.type === 'RUO'}">Research Use Only</button>
+        <button type="button" data-type="IVD" aria-pressed="${isIVD}">IVD</button>
+      </div>
+    </div>
+    <div>
+      <label>Scope</label>
+      <div class="opts">
+        <label class="chk ${isIVD ? '' : 'off'}" title="${isIVD ? '' : 'Markets apply to IVD products'}"><input type="checkbox" id="mUS" ${p.markets?.us ? 'checked' : ''} ${isIVD ? '' : 'disabled'}> US (FDA)</label>
+        <label class="chk ${isIVD ? '' : 'off'}" title="${isIVD ? '' : 'Markets apply to IVD products'}"><input type="checkbox" id="mEU" ${p.markets?.eu ? 'checked' : ''} ${isIVD ? '' : 'disabled'}> EU (IVDR)</label>
+        <label class="chk"><input type="checkbox" id="sw" ${p.software ? 'checked' : ''}> Includes software</label>
+      </div>
+    </div>
+    <div>
+      <label for="curGate">Current gate</label>
+      <select id="curGate">${GATES.map(g => `<option value="${g.id}" ${g.id === p.currentGate ? 'selected' : ''}>${g.code} ${esc(g.name)}</option>`).join('')}</select>
+    </div>
+  </div>
+
+  ${p.type === 'RUO' ? `<div class="callout" style="margin-bottom:22px">RUO products are not medical devices, so full design controls are shown as <b>recommended</b>. The non-negotiables protect the RUO status itself: correct labeling, no clinical claims, data behind every datasheet claim, and controlled manufacturing and complaint handling. Many teams run RUO under design control anyway to keep an IVD path open.</div>` : ''}
+  ${isIVD && !p.markets?.us && !p.markets?.eu ? `<div class="callout" style="margin-bottom:22px">Select at least one target market to include its submission and post-market deliverables.</div>` : ''}
+
+  <div id="rdTop">${topHTML(p, stats)}</div>
+    <div class="toolbar">
+    <div class="seg" role="group" aria-label="Filter deliverables">
+      <button type="button" data-filter="all" aria-pressed="${filter === 'all'}">All</button>
+      <button type="button" data-filter="gaps" aria-pressed="${filter === 'gaps'}">Gaps only</button>
+      <button type="button" data-filter="nn" aria-pressed="${filter === 'nn'}">Non-negotiable</button>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" class="btn" id="exportGaps">Export gap report (CSV)</button>
+    <button type="button" class="btn" onclick="window.print()">Print</button>
+  </div>
+
+  <div class="dlist">
+    ${rows.length ? rows.map(r => deliverableRow(r, p)).join('') : `<div class="card empty">${filter === 'gaps' ? 'No gaps at this gate.' : 'Nothing to show for this filter.'}</div>`}
+  </div>
+  ${st.naCount ? `<p class="nacount">${st.naCount} deliverable${st.naCount > 1 ? 's' : ''} at this gate ${st.naCount > 1 ? 'do' : 'does'} not apply to this configuration (${esc(p.type)}${isIVD ? ', ' + marketText(p) : ''}${p.software ? ', with software' : ', no software'}). See the Deliverable Matrix for the full set.</p>` : ''}
+  `;
+  bindReadiness(p);
+}
+
+
+function topHTML(p, stats){
+  stats = stats || GATES.map(g => gateStats(p, g.id));
+  const st = stats[selGate], gate = GATES[selGate], V = VERDICT[st.verdict];
+  const pct = st.nn.length ? Math.round(st.nnDone / st.nn.length * 100) : 100;
+  return `<div class="rail" role="group" aria-label="Gates">
+    ${GATES.map((g, i) => { const s = stats[i]; return `
+      <button type="button" class="gate" data-gate="${i}" aria-pressed="${i === selGate}" ${i === p.currentGate ? 'aria-current="step"' : ''}>
+        <span class="dia d-${s.nn.length || s.rec.length ? s.verdict : 'none'}"><b>${VERDICT[s.verdict].icon}</b></span>
+        <span class="gname">${g.code} ${esc(g.name)}</span>
+        <span class="gmeta">${s.nnDone}/${s.nn.length} non-negotiable · ${s.recDone}/${s.rec.length} rec.</span>
+        ${i === p.currentGate ? '<span class="cur">Current</span>' : ''}
+      </button>`; }).join('')}
+  </div>
+
+  <div class="gatehead">
+    <div>
+      <h1>${gate.code} ${esc(gate.name)}</h1>
+      <p class="lead" style="margin-bottom:0">${esc(gate.purpose)}</p>
+    </div>
+    <div class="verdict v-${V.cls}" role="status">
+      <div class="big">${pct}%</div>
+      <div><div class="vt">${V.title}</div><div class="vs">${st.nnDone} of ${st.nn.length} non-negotiables · ${st.recDone} of ${st.rec.length} recommended</div>
+      <div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div></div>
+    </div>
+  </div>
+
+  ${st.blockers.length ? `<div class="blockers"><b>Blocking this gate</b><ul>${st.blockers.map(r => `<li><a href="#d-${r.d.id}" data-jump="${r.d.id}">${esc(r.d.name)}</a> — ${esc(STATUS_LABEL[r.it.status] || 'Missing')}${r.it.status === 'na' ? ' without justification' : ''}</li>`).join('')}</ul></div>` : ''}
+
+`;
+}
+function bindTop(p){
+  document.querySelectorAll('[data-gate]').forEach(b => b.onclick = () => { selGate = +b.dataset.gate; render(); });
+  document.querySelectorAll('[data-jump]').forEach(a => a.onclick = e => {
+    e.preventDefault(); const el = document.getElementById('d-' + a.dataset.jump);
+    if (el){ el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'center' }); el.querySelector('select')?.focus({ preventScroll:true }); }
+  });
+}
+
+function marketText(p){ const m = []; if (p.markets?.us) m.push('US'); if (p.markets?.eu) m.push('EU'); return m.length ? m.join(' + ') : 'no market selected'; }
+
+function deliverableRow(r, p){
+  const { d, lv, it } = r;
+  const note = p.type === 'RUO' && d.ruoNote ? d.ruoNote : '';
+  const naNoJust = it.status === 'na' && !(it.evidence || '').trim();
+  return `
+  <div class="drow s-${esc(it.status)} ${lv}" id="d-${d.id}" data-row="${d.id}">
+    <div>
+      <div class="dtitle">${esc(d.name)} <span class="pill lv-${lv}">${LEVEL_LABEL[lv]}</span>${d.mkt ? `<span class="tag2">${d.mkt === 'us' ? 'US' : 'EU'}</span>` : ''}${d.sw ? '<span class="tag2">Software</span>' : ''}</div>
+      <div class="ddesc">${esc(d.desc)}</div>
+      <div class="dref">${esc(d.ref)}</div>
+      ${note ? `<div class="dnote">${esc(note)}</div>` : ''}
+    </div>
+    <div class="dctl">
+      <div class="full">
+        <label for="st-${d.id}">Status</label>
+        <select id="st-${d.id}" data-field="status" data-id="${d.id}">${STATUS.map(s => `<option value="${s.v}" ${s.v === it.status ? 'selected' : ''}>${s.label}</option>`).join('')}</select>
+      </div>
+      <div class="full">
+        <label for="ev-${d.id}">${it.status === 'na' ? 'Justification' : 'Evidence (doc no., link, or location)'}</label>
+        <input id="ev-${d.id}" data-field="evidence" data-id="${d.id}" maxlength="500" value="${esc(it.evidence)}" placeholder="${it.status === 'na' ? 'Why this does not apply' : 'e.g., DOC-0123 Rev B'}">
+      </div>
+      <div class="full">
+        <label for="ow-${d.id}">Owner</label>
+        <input id="ow-${d.id}" data-field="owner" data-id="${d.id}" maxlength="120" value="${esc(it.owner)}" placeholder="Name or function">
+      </div>
+      <div class="warnline" ${naNoJust && lv === 'nn' ? '' : 'hidden'}>A justification is required before N/A counts toward readiness.</div>
+    </div>
+  </div>`;
+}
+
+/* Full re-render that keeps scroll position and keyboard focus */
+function rerenderKeepFocus(){
+  const fid = document.activeElement?.id, y = window.scrollY;
+  render(); window.scrollTo(0, y);
+  if (fid) document.getElementById(fid)?.focus({ preventScroll:true });
+}
+/* Light update while typing: summary + this row's warning, inputs untouched */
+function refreshSummary(p, id){
+  const top = $('#rdTop'); if (!top) return;
+  top.innerHTML = topHTML(p); bindTop(p);
+  const row = document.querySelector(`[data-row="${id}"]`), d = D.find(x => x.id === id);
+  if (row && d){
+    const it = itemOf(p, id), warn = row.querySelector('.warnline');
+    const show = it.status === 'na' && !(it.evidence || '').trim() && levelFor(d, p) === 'nn';
+    if (warn) warn.hidden = !show;
+  }
+}
+function bindReadiness(p){
+  $('#projSel').onchange = e => { S.activeId = e.target.value; selGate = null; persist(); render(); };
+  document.querySelectorAll('[data-type]').forEach(b => b.onclick = () => {
+    p.type = b.dataset.type;
+    if (p.type === 'IVD' && !p.markets?.us && !p.markets?.eu) p.markets = { us:true, eu:false };
+    persist(); render();
+  });
+  $('#mUS').onchange = e => { p.markets = { ...(p.markets || {}), us:e.target.checked }; persist(); render(); };
+  $('#mEU').onchange = e => { p.markets = { ...(p.markets || {}), eu:e.target.checked }; persist(); render(); };
+  $('#sw').onchange = e => { p.software = e.target.checked; persist(); render(); };
+  $('#curGate').onchange = e => { p.currentGate = +e.target.value; selGate = p.currentGate; persist(); render(); };
+  bindTop(p);
+  document.querySelectorAll('[data-filter]').forEach(b => b.onclick = () => { filter = b.dataset.filter; render(); });
+  document.querySelectorAll('.dctl [data-field]').forEach(el => {
+    const id = el.dataset.id, f = el.dataset.field;
+    if (!D.some(d => d.id === id) || !['status','evidence','owner'].includes(f)) return;
+    const write = () => {
+      const max = f === 'evidence' ? MAX_TEXT : MAX_NAME;
+      const v = f === 'status' ? (STATUS_SET.has(el.value) ? el.value : 'missing') : el.value.slice(0, max);
+      p.items[id] = { ...itemOf(p, id), [f]: v };
+      persist();
+    };
+    if (el.tagName === 'SELECT') el.onchange = () => { write(); rerenderKeepFocus(); };
+    else el.oninput = () => { write(); refreshSummary(p, id); };
+  });
+  $('#exportGaps').onclick = () => exportGapCSV(p);
+}
+
+function renderMatrix(){
+  const cell = lv => lv === 'na' ? '<span class="pill lv-na">—</span>' : `<span class="pill lv-${lv}">${LEVEL_LABEL[lv]}</span>`;
+  const ivdLevel = (d, m) => (d.mkt && d.mkt !== m) ? 'na' : d.ivd;
+  const counts = { ruo:0, us:0, eu:0 };
+  D.forEach(d => { if (d.ruo === 'nn') counts.ruo++; if (ivdLevel(d,'us') === 'nn') counts.us++; if (ivdLevel(d,'eu') === 'nn') counts.eu++; });
+  $('#main').innerHTML = `
+  <h1>Deliverable Matrix</h1>
+  <p class="lead">Every deliverable in the model and how its requirement changes by product type. Non-negotiables must be in place, or marked N/A with a written justification, before the gate can pass. Software deliverables apply only when a product includes software.</p>
+  <div class="legend">
+    <span><span class="pill lv-nn">Non-negotiable</span> gate cannot pass without it</span>
+    <span><span class="pill lv-rec">Recommended</span> good practice; shows as an open item</span>
+    <span><span class="pill lv-na">—</span> not applicable</span>
+  </div>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Deliverable</th><th style="text-align:center">Research Use Only<br><span style="font-weight:400">${counts.ruo} non-negotiable</span></th><th style="text-align:center">IVD, US (FDA)<br><span style="font-weight:400">${counts.us} non-negotiable</span></th><th style="text-align:center">IVD, EU (IVDR)<br><span style="font-weight:400">${counts.eu} non-negotiable</span></th></tr></thead>
+    <tbody>
+    ${GATES.map(g => `
+      <tr class="ghead"><td colspan="4">${g.code} ${esc(g.name)}</td></tr>
+      ${D.filter(d => d.g === g.id).map(d => `
+        <tr>
+          <td><div class="mname">${esc(d.name)}${d.sw ? '<span class="tag2">If software</span>' : ''}</div><div class="mref">${esc(d.ref)}</div></td>
+          <td class="c">${cell(d.ruo)}</td>
+          <td class="c">${cell(ivdLevel(d,'us'))}</td>
+          <td class="c">${cell(ivdLevel(d,'eu'))}</td>
+        </tr>`).join('')}`).join('')}
+    </tbody>
+  </table>
+  </div>
+  <p class="hint" style="margin-top:14px;max-width:80ch">References point to ISO 13485:2016 clauses, ISO 14971:2019, IEC 62304, the FDA QMSR (21 CFR 820, effective February 2026, which incorporates ISO 13485 by reference), 21 CFR 809, and EU IVDR 2017/746. This is a planning model; confirm requirements for each product with Regulatory Affairs and Quality.</p>
+  `;
+}
+
+/* Two-step confirmation (window.confirm is blocked in sandboxed frames) */
+function armConfirm(btn, label){
+  if (btn.dataset.armed === '1') return true;
+  const orig = btn.textContent;
+  btn.dataset.armed = '1'; btn.textContent = label;
+  setTimeout(() => { if (btn.isConnected){ delete btn.dataset.armed; btn.textContent = orig; } }, 4000);
+  return false;
+}
+function renderProjects(){
+  $('#main').innerHTML = `
+  <h1>Projects &amp; Data</h1>
+  <p class="lead">Each project keeps its own product type, scope, and evidence log. Data is saved in this browser only, so export a JSON backup to move it or share it.</p>
+  <div class="plist">
+    ${S.projects.map(p => {
+      const cg = gateStats(p, p.currentGate ?? 0), g = GATES[p.currentGate ?? 0];
+      return `<div class="card pcard ${p.id === S.activeId ? 'active' : ''}">
+        <div><h3 style="margin:0" data-title="${esc(p.id)}">${esc(p.name)}</h3><div class="hint">${p.type === 'RUO' ? 'Research Use Only' : 'IVD · ' + marketText(p)}${p.software ? ' · with software' : ''}</div></div>
+        <div class="mini" aria-label="Gate status">${GATES.map(x => { const s = gateStats(p, x.id); return `<span class="d-${s.verdict}" title="${x.code}: ${VERDICT[s.verdict].title}"></span>`; }).join('')}</div>
+        <div style="font-size:14px">Current: <b>${g.code} ${esc(g.name)}</b><br><span style="color:var(--${cg.blockers.length ? 'lo' : 'hi'})">${cg.blockers.length ? cg.blockers.length + ' non-negotiable gap' + (cg.blockers.length > 1 ? 's' : '') : 'No non-negotiable gaps'}</span></div>
+        <div class="row">
+          <button type="button" class="btn sm primary" data-open="${esc(p.id)}">Open</button>
+          <button type="button" class="btn sm" data-rename="${esc(p.id)}">Rename</button>
+          <button type="button" class="btn sm" data-dup="${esc(p.id)}">Duplicate</button>
+          <button type="button" class="btn sm danger" data-del="${esc(p.id)}">Delete</button>
+        </div>
+      </div>`; }).join('')}
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>New project</h2>
+      <label for="npName">Project name</label>
+      <input id="npName" maxlength="120" placeholder="e.g., Sepsis Host-Response Panel">
+      <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;align-items:center">
+        <div class="seg" role="group" aria-label="Product type">
+          <button type="button" data-np="RUO" aria-pressed="false">Research Use Only</button>
+          <button type="button" data-np="IVD" aria-pressed="true">IVD</button>
+        </div>
+        <button type="button" class="btn primary" id="npAdd">Create project</button>
+      </div>
+      <p class="hint">You can change type, markets, and software scope at any time from Gate Readiness. Evidence entries are kept when you switch.</p>
+    </div>
+    <div class="card">
+      <h2>Backup &amp; restore</h2>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button type="button" class="btn" id="expJson">Export all (JSON)</button>
+        <button type="button" class="btn" id="impJson">Import JSON</button>
+        <button type="button" class="btn danger" id="reset">Reset to samples</button>
+      </div>
+      <p class="hint" style="font-size:14px">Importing replaces all projects in this browser. Export first if you want to keep the current data.</p>
+      <p class="hint" style="font-size:14px"><b>Backups are unencrypted.</b> A JSON export contains every project name, evidence reference and owner in plain text. Store it like any other controlled quality record, and only import files you exported yourself or received from someone you trust.</p>
+    </div>
+  </div>`;
+
+  let npType = 'IVD';
+  document.querySelectorAll('[data-np]').forEach(b => b.onclick = () => {
+    npType = b.dataset.np;
+    document.querySelectorAll('[data-np]').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+  });
+  $('#npAdd').onclick = () => {
+    const name = $('#npName').value.trim();
+    if (!name){ toast('Give the project a name first.'); $('#npName').focus(); return; }
+    if (S.projects.length >= MAX_PROJECTS){ toast('Project limit reached.'); return; }
+    const p = { id:uid(), name, type:npType, markets:{ us:npType === 'IVD', eu:false }, software:false, owner:'', currentGate:0, items:{} };
+    S.projects.push(p); S.activeId = p.id; selGate = 0; persist(); view = 'readiness'; render(); toast(`Created “${name}”.`);
+  };
+  document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => { S.activeId = b.dataset.open; selGate = null; view = 'readiness'; persist(); render(); });
+  document.querySelectorAll('[data-rename]').forEach(b => b.onclick = () => {
+    const p = S.projects.find(x => x.id === b.dataset.rename); if (!p) return;
+    const h3 = document.querySelector(`[data-title="${CSS.escape(p.id)}"]`); if (!h3) return;
+    const inp = document.createElement('input');
+    inp.value = p.name; inp.maxLength = MAX_NAME; inp.setAttribute('aria-label', 'Project name');
+    h3.replaceWith(inp); inp.focus(); inp.select();
+    let done = false;
+    const finish = save => {
+      if (done) return; done = true;
+      const n = inp.value.trim();
+      if (save && n){ p.name = n.slice(0, MAX_NAME); persist(); }
+      render();
+    };
+    inp.onkeydown = e => { if (e.key === 'Enter') finish(true); else if (e.key === 'Escape') finish(false); };
+    inp.onblur = () => finish(true);
+  });
+  document.querySelectorAll('[data-dup]').forEach(b => b.onclick = () => {
+    const p = S.projects.find(x => x.id === b.dataset.dup); if (!p) return;
+    if (S.projects.length >= MAX_PROJECTS){ toast('Project limit reached.'); return; }
+    const c = JSON.parse(JSON.stringify(p));
+    c.id = uid(); c.name = (p.name + ' (copy)').slice(0, MAX_NAME); S.projects.push(c); persist(); render(); toast('Project duplicated.');
+  });
+  document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+    const p = S.projects.find(x => x.id === b.dataset.del); if (!p) return;
+    if (S.projects.length === 1){ toast('Keep at least one project. Create another before deleting this one.'); return; }
+    if (!armConfirm(b, 'Click again to delete')) return;
+    S.projects = S.projects.filter(x => x.id !== p.id);
+    if (S.activeId === p.id) S.activeId = S.projects[0].id;
+    persist(); render();
+  });
+  $('#expJson').onclick = () => saveFile(`biogate-backup-${today()}.json`, JSON.stringify(S, null, 2), 'application/json');
+  $('#impJson').onclick = () => $('#jsonIn').click();
+  $('#reset').onclick = e => { if (armConfirm(e.currentTarget, 'Click again to replace all data')){ S = freshState(); selGate = null; persist(); render(); toast('Reset to samples.'); } };
+}
+
+/* =====================================================================
+   Export / import
+   ===================================================================== */
+function today(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+const csvCell = v => { let s = String(v ?? ''); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+function exportGapCSV(p){
+  const lines = [['Project','Product type','Gate','Deliverable','Requirement','Status','Evidence / justification','Owner','Reference'].join(',')];
+  GATES.forEach(g => gateStats(p, g.id).rows.filter(r => r.lv !== 'na' && !satisfied(r.it)).forEach(r => {
+    lines.push([p.name, p.type === 'RUO' ? 'RUO' : 'IVD (' + marketText(p) + ')', g.code + ' ' + g.name, r.d.name, LEVEL_LABEL[r.lv], STATUS_LABEL[r.it.status], r.it.evidence, r.it.owner, r.d.ref].map(csvCell).join(','));
+  }));
+  const safe = p.name.replace(/[^\w-]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'project';
+  saveFile(`biogate-gaps-${safe}-${today()}.csv`, '\ufeff' + lines.join('\r\n'), 'text/csv');
+}
+
+const downloadsReady = (window.claude && typeof window.claude.use === 'function')
+  ? Promise.race([Promise.resolve(window.claude.use('downloads')).catch(() => null), new Promise(r => setTimeout(() => r(null), 10000))])
+  : Promise.resolve(null);
+async function saveFile(filename, data, mime){
+  const downloadsNS = await downloadsReady;
+  if (downloadsNS){
+    try { await downloadsNS.save({ filename, data }); toast('Saved ' + filename); }
+    catch(e){
+      if (e?.code === 'declined') return;
+      toast(e?.code === 'rate_limited' ? 'A save prompt is already open.' : 'Could not save the file here.');
+    }
+    return;
+  }
+  const url = URL.createObjectURL(new Blob([data], { type:mime }));
+  const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+$('#jsonIn').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  if (f.size > 5 * 1024 * 1024){ toast('That file is too large to be a BioGate backup.'); e.target.value = ''; return; }
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const s = sanitizeState(JSON.parse(r.result));
+      if (!s) throw new Error('bad');
+      S = s; selGate = null; persist(); render(); toast(`Imported ${s.projects.length} project${s.projects.length > 1 ? 's' : ''}.`);
+    } catch(err){ toast('That file is not a BioGate backup.'); }
+    e.target.value = '';
+  };
+  r.onerror = () => { toast('Could not read that file.'); e.target.value = ''; };
+  r.readAsText(f);
+});
+
+/* =====================================================================
+   Nav & theme (same behavior as BioPortfolio / BioCapacity)
+   ===================================================================== */
+document.querySelectorAll('#nav button').forEach(b => b.onclick = () => { view = b.dataset.v; render(); window.scrollTo(0, 0); });
+
+const darkQuery = window.matchMedia?.('(prefers-color-scheme: dark)');
+function storedTheme(){ try { const t = localStorage.getItem(THEME_KEY); return t === 'light' || t === 'dark' ? t : null; } catch(e){ return null; } }
+const currentTheme = () => document.documentElement.dataset.theme || (darkQuery?.matches ? 'dark' : 'light');
+const ICON_SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></g></svg>';
+const ICON_MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1Z" fill="currentColor"/></svg>';
+function applyTheme(theme){
+  if (theme) document.documentElement.dataset.theme = theme; else delete document.documentElement.dataset.theme;
+  const dark = currentTheme() === 'dark', btn = $('#theme-toggle');
+  btn.setAttribute('aria-label', `Switch to ${dark ? 'light' : 'dark'} mode`);
+  btn.innerHTML = `${dark ? ICON_SUN : ICON_MOON}<span>${dark ? 'Light mode' : 'Dark mode'}</span>`;
+}
+$('#theme-toggle').addEventListener('click', () => { const next = currentTheme() === 'dark' ? 'light' : 'dark'; try { localStorage.setItem(THEME_KEY, next); } catch(e){} applyTheme(next); });
+darkQuery?.addEventListener?.('change', () => { if (!storedTheme()) applyTheme(null); });
+applyTheme(storedTheme());
+
+/* Pick up changes made in other tabs */
+window.addEventListener('storage', e => {
+  if (e.key !== STORAGE_KEY || !e.newValue) return;
+  try {
+    const s = sanitizeState(JSON.parse(e.newValue)); if (!s) return;
+    const keep = S.activeId; S = s;
+    if (S.projects.some(p => p.id === keep)) S.activeId = keep; else selGate = null;
+    rerenderKeepFocus();
+  } catch(_){ /* ignore unreadable updates */ }
+});
+
+render();
+if (loadNotice) toast(loadNotice, 8000);
+</script>
+</body>
+</html>

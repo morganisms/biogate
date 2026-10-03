@@ -1,0 +1,10 @@
+# BioGate exports contain project and quality-record data in plain text.
+# Never commit them. See the caution in README.md.
+biogate-backup-*.json
+biogate-gaps-*.csv
+*.json
+*.csv
+
+# OS clutter
+.DS_Store
+Thumbs.db
